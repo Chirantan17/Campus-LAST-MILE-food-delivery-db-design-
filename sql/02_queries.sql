@@ -1,42 +1,45 @@
--- 1. Spatial Query: Find 5 nearest available drivers within 2km of a restaurant
-SELECT 
-    d.driver_id, 
-    d.driver_name, 
-    ST_Distance(lt.location::geography, r.location::geography) AS distance_meters
-FROM DRIVER d
-JOIN LOCATION_TRACE lt ON d.driver_id = lt.driver_id
-JOIN RESTAURANT r ON r.restaurant_id = 1
-WHERE d.status = 'AVAILABLE'
-  AND ST_DWithin(lt.location::geography, r.location::geography, 2000)
-ORDER BY distance_meters ASC
-LIMIT 5;
+-- ============================================================================
+-- MILESTONE 4: ADVANCED SPATIOTEMPORAL QUERIES
+-- ============================================================================
 
--- 2. Spatiotemporal Query: Reconstruct a delivery driver's full route trajectory line
+-- 1. SPATIAL QUERY: Find restaurants within 500 meters of a customer location
 SELECT 
-    delivery_id, 
-    ST_MakeLine(location ORDER BY recorded_at) AS trajectory_line
-FROM LOCATION_TRACE
-WHERE delivery_id = 1
-GROUP BY delivery_id;
+    r.restaurant_name,
+    c.customer_name,
+    c.hostel_name,
+    ROUND(ST_Distance(r.location::geography, c.location::geography)::numeric, 2) AS distance_meters
+FROM restaurant r, customer c
+WHERE ST_DWithin(r.location::geography, c.location::geography, 500)
+ORDER BY distance_meters ASC;
 
--- 3. Temporal Query: Detect delayed deliveries exceeding promised delivery window
+-- 2. TEMPORAL QUERY: Delivery fulfillment duration by hour
 SELECT 
-    o.order_id, 
-    dr.delivery_id, 
-    o.promised_delivery_time, 
-    dr.delivery_time,
-    EXTRACT(EPOCH FROM (dr.delivery_time - o.promised_delivery_time))/60 AS delay_minutes
-FROM "ORDER" o
-JOIN DELIVERY_REQUEST dr ON o.order_id = dr.order_id
-WHERE dr.delivery_time > o.promised_delivery_time;
+    EXTRACT(HOUR FROM created_at) AS order_hour,
+    COUNT(order_id) AS total_orders,
+    ROUND(AVG(EXTRACT(EPOCH FROM (delivered_at - created_at))/60)::numeric, 2) AS avg_delivery_minutes
+FROM delivery_request
+WHERE status = 'DELIVERED'
+GROUP BY order_hour
+ORDER BY order_hour ASC;
 
--- 4. Spatiotemporal Aggregate: Deliveries completed per Campus Zone by hour
+-- 3. SPATIOTEMPORAL QUERY: Reconstruct driver trajectory path and calculate distance
 SELECT 
-    z.zone_name, 
-    DATE_PART('hour', de.event_time) AS delivery_hour, 
-    COUNT(de.event_id) AS total_completed
-FROM DELIVERY_EVENT de
-JOIN CAMPUS_ZONE z ON ST_Contains(z.boundary, de.location)
-WHERE de.event_type = 'DELIVERED'
-GROUP BY z.zone_name, delivery_hour
-ORDER BY z.zone_name, delivery_hour;
+    t.delivery_id,
+    t.driver_id,
+    COUNT(t.trace_id) AS telemetry_ping_count,
+    ROUND(ST_Length(ST_MakeLine(t.location ORDER BY t.recorded_at)::geography)::numeric, 2) AS trajectory_length_meters,
+    MIN(t.recorded_at) AS trip_start_time,
+    MAX(t.recorded_at) AS trip_end_time
+FROM location_trace t
+GROUP BY t.delivery_id, t.driver_id;
+
+-- 4. ANALYTICAL QUERY: Zone order density and active driver distribution
+SELECT 
+    z.zone_name,
+    COUNT(DISTINCT dr.order_id) AS total_deliveries,
+    COUNT(DISTINCT dr.driver_id) AS active_drivers
+FROM campus_zone z
+JOIN customer c ON ST_Contains(z.boundary, c.location)
+JOIN delivery_request dr ON dr.customer_id = c.customer_id
+GROUP BY z.zone_id, z.zone_name
+ORDER BY total_deliveries DESC;

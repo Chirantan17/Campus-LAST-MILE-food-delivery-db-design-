@@ -1,87 +1,74 @@
--- Enable PostGIS extension for spatial types
+-- Reset database schema for clean automated runs
+DROP SCHEMA IF EXISTS public CASCADE;
+CREATE SCHEMA public;
 CREATE EXTENSION IF NOT EXISTS postgis;
 
--- 1. Campus Zone
-CREATE TABLE CAMPUS_ZONE (
+-- 1. Campus Zones Table
+CREATE TABLE campus_zone (
     zone_id SERIAL PRIMARY KEY,
     zone_name VARCHAR(100) NOT NULL,
     boundary GEOMETRY(Polygon, 4326) NOT NULL
 );
 
--- 2. Customer
-CREATE TABLE CUSTOMER (
-    customer_id SERIAL PRIMARY KEY,
-    name VARCHAR(100) NOT NULL,
-    phone VARCHAR(20) NOT NULL,
-    delivery_location GEOMETRY(Point, 4326) NOT NULL,
-    zone_id INT REFERENCES CAMPUS_ZONE(zone_id)
-);
-
--- 3. Restaurant
-CREATE TABLE RESTAURANT (
-    restaurant_id SERIAL PRIMARY KEY,
-    restaurant_name VARCHAR(100) NOT NULL,
-    location GEOMETRY(Point, 4326) NOT NULL,
-    zone_id INT REFERENCES CAMPUS_ZONE(zone_id),
-    status VARCHAR(20) DEFAULT 'ACTIVE'
-);
-
--- 4. Driver
-CREATE TABLE DRIVER (
+-- 2. Drivers Table
+CREATE TABLE driver (
     driver_id SERIAL PRIMARY KEY,
     driver_name VARCHAR(100) NOT NULL,
-    phone VARCHAR(20) NOT NULL,
-    vehicle_type VARCHAR(50) NOT NULL,
+    phone VARCHAR(20),
     status VARCHAR(20) DEFAULT 'AVAILABLE'
 );
 
--- 5. Order
-CREATE TABLE "ORDER" (
+-- 3. Restaurants Table
+CREATE TABLE restaurant (
+    restaurant_id SERIAL PRIMARY KEY,
+    restaurant_name VARCHAR(100) NOT NULL,
+    location GEOMETRY(Point, 4326) NOT NULL
+);
+
+-- 4. Customers / Hostels Table
+CREATE TABLE customer (
+    customer_id SERIAL PRIMARY KEY,
+    customer_name VARCHAR(100) NOT NULL,
+    hostel_name VARCHAR(100),
+    location GEOMETRY(Point, 4326) NOT NULL
+);
+
+-- 5. Delivery Requests / Orders Table
+CREATE TABLE delivery_request (
     order_id SERIAL PRIMARY KEY,
-    customer_id INT REFERENCES CUSTOMER(customer_id),
-    restaurant_id INT REFERENCES RESTAURANT(restaurant_id),
-    order_time TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-    promised_delivery_time TIMESTAMPTZ NOT NULL,
-    status VARCHAR(20) DEFAULT 'PLACED'
+    customer_id INT REFERENCES customer(customer_id),
+    restaurant_id INT REFERENCES restaurant(restaurant_id),
+    driver_id INT REFERENCES driver(driver_id),
+    status VARCHAR(30) DEFAULT 'PENDING',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    delivered_at TIMESTAMP
 );
 
--- 6. Delivery Request
-CREATE TABLE DELIVERY_REQUEST (
-    delivery_id SERIAL PRIMARY KEY,
-    order_id INT UNIQUE REFERENCES "ORDER"(order_id),
-    driver_id INT REFERENCES DRIVER(driver_id),
-    assigned_at TIMESTAMPTZ,
-    pickup_time TIMESTAMPTZ,
-    delivery_time TIMESTAMPTZ,
-    status VARCHAR(20) DEFAULT 'CREATED'
+-- 6. Location Telemetry Trajectories Table
+CREATE TABLE location_trace (
+    trace_id SERIAL PRIMARY KEY,
+    delivery_id INT REFERENCES delivery_request(order_id),
+    driver_id INT REFERENCES driver(driver_id),
+    location GEOMETRY(Point, 4326) NOT NULL,
+    recorded_at TIMESTAMP NOT NULL
 );
 
--- 7. Location Trace
-CREATE TABLE LOCATION_TRACE (
-    trace_id BIGSERIAL PRIMARY KEY,
-    driver_id INT REFERENCES DRIVER(driver_id),
-    delivery_id INT REFERENCES DELIVERY_REQUEST(delivery_id),
-    recorded_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-    location GEOMETRY(Point, 4326) NOT NULL
-);
-
--- 8. Delivery Event
-CREATE TABLE DELIVERY_EVENT (
+-- 7. Delivery Events Table
+CREATE TABLE delivery_event (
     event_id SERIAL PRIMARY KEY,
-    delivery_id INT REFERENCES DELIVERY_REQUEST(delivery_id),
-    driver_id INT REFERENCES DRIVER(driver_id),
+    order_id INT REFERENCES delivery_request(order_id),
     event_type VARCHAR(50) NOT NULL,
-    event_time TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-    location GEOMETRY(Point, 4326) NOT NULL
+    location GEOMETRY(Point, 4326) NOT NULL,
+    event_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Spatial GiST Indexes
-CREATE INDEX idx_campus_zone_boundary ON CAMPUS_ZONE USING GIST(boundary);
-CREATE INDEX idx_customer_location ON CUSTOMER USING GIST(delivery_location);
-CREATE INDEX idx_restaurant_location ON RESTAURANT USING GIST(location);
-CREATE INDEX idx_location_trace_spatial ON LOCATION_TRACE USING GIST(location);
-CREATE INDEX idx_location_trace_time ON LOCATION_TRACE(recorded_at);
-CREATE INDEX idx_delivery_event_spatial ON DELIVERY_EVENT USING GIST(location);
+-- SPATIAL INDEXES (GiST)
+CREATE INDEX idx_campus_zone_boundary ON campus_zone USING GIST (boundary);
+CREATE INDEX idx_customer_location ON customer USING GIST (location);
+CREATE INDEX idx_restaurant_location ON restaurant USING GIST (location);
+CREATE INDEX idx_location_trace_spatial ON location_trace USING GIST (location);
+CREATE INDEX idx_delivery_event_spatial ON delivery_event USING GIST (location);
 
--- BRIN index for append-only high-frequency GPS timestamps
-CREATE INDEX idx_location_trace_brin_time ON LOCATION_TRACE USING BRIN(recorded_at);
+-- TEMPORAL INDEXES (B-Tree & BRIN)
+CREATE INDEX idx_location_trace_time ON location_trace (recorded_at);
+CREATE INDEX idx_location_trace_brin_time ON location_trace USING BRIN (recorded_at);

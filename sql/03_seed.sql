@@ -1,38 +1,34 @@
--- 1. Insert Campus Boundary Polygon (WGS 84 SRID 4326)
-INSERT INTO CAMPUS_ZONE (zone_name, boundary) VALUES
-('North Campus', ST_GeomFromText('POLYGON((77.5900 12.9700, 77.5950 12.9700, 77.5950 12.9750, 77.5900 12.9750, 77.5900 12.9700))', 4326)),
-('South Campus', ST_GeomFromText('POLYGON((77.5900 12.9650, 77.5950 12.9650, 77.5950 12.9700, 77.5900 12.9700, 77.5900 12.9650))', 4326));
+-- Reset table contents
+TRUNCATE TABLE delivery_event, location_trace, delivery_request, customer, restaurant, driver, campus_zone RESTART IDENTITY CASCADE;
 
--- 2. Insert Sample Restaurants and Customers
-INSERT INTO RESTAURANT (restaurant_name, location, zone_id, status) VALUES
-('Campus Food Court', ST_SetSRID(ST_MakePoint(77.5925, 12.9725), 4326), 1, 'ACTIVE'),
-('Library Cafe', ST_SetSRID(ST_MakePoint(77.5910, 12.9680), 4326), 2, 'ACTIVE');
+-- 1. Campus Zones
+INSERT INTO campus_zone (zone_name, boundary) VALUES
+('North Campus', ST_GeomFromText('POLYGON((77.590 12.970, 77.595 12.970, 77.595 12.975, 77.590 12.975, 77.590 12.970))', 4326)),
+('South Campus', ST_GeomFromText('POLYGON((77.590 12.965, 77.595 12.965, 77.595 12.970, 77.590 12.970, 77.590 12.965))', 4326));
 
-INSERT INTO CUSTOMER (name, phone, delivery_location, zone_id) VALUES
-('Alice Smith', '9876543210', ST_SetSRID(ST_MakePoint(77.5940, 12.9740), 4326), 1),
-('Bob Jones', '9876543211', ST_SetSRID(ST_MakePoint(77.5915, 12.9670), 4326), 2);
+-- 2. Drivers
+INSERT INTO driver (driver_name, phone, status) VALUES
+('John Doe', '9876543210', 'BUSY'),
+('Jane Smith', '9876543211', 'AVAILABLE');
 
--- 3. Insert Drivers
-INSERT INTO DRIVER (driver_name, phone, vehicle_type, status) VALUES
-('Rider 1', '9000000001', 'E-Bike', 'AVAILABLE'),
-('Rider 2', '9000000002', 'Bicycle', 'BUSY');
+-- 3. Restaurants
+INSERT INTO restaurant (restaurant_name, location) VALUES
+('Campus Canteen', ST_SetSRID(ST_MakePoint(77.592, 12.972), 4326)),
+('North Food Court', ST_SetSRID(ST_MakePoint(77.594, 12.974), 4326));
 
--- 4. Insert Order and Delivery Request
-INSERT INTO "ORDER" (customer_id, restaurant_id, order_time, promised_delivery_time, status) VALUES
-(1, 1, NOW() - INTERVAL '30 minutes', NOW() + INTERVAL '10 minutes', 'DISPATCHED');
+-- 4. Customers / Hostels
+INSERT INTO customer (customer_name, hostel_name, location) VALUES
+('Alice Johnson', 'Hostel A', ST_SetSRID(ST_MakePoint(77.593, 12.973), 4326)),
+('Bob Williams', 'Hostel B', ST_SetSRID(ST_MakePoint(77.591, 12.968), 4326));
 
-INSERT INTO DELIVERY_REQUEST (order_id, driver_id, assigned_at, status) VALUES
-(1, 1, NOW() - INTERVAL '25 minutes', 'IN_TRANSIT');
+-- 5. Delivery Requests / Orders
+INSERT INTO delivery_request (customer_id, restaurant_id, driver_id, status, created_at, delivered_at) VALUES
+(1, 1, 1, 'DELIVERED', '2026-09-12 12:00:00', '2026-09-12 12:25:00'),
+(2, 2, 2, 'IN_TRANSIT', '2026-09-12 12:30:00', NULL);
 
--- 5. Insert Continuous Driver Location Telemetry
-INSERT INTO LOCATION_TRACE (driver_id, delivery_id, recorded_at, location) VALUES
-(1, 1, NOW() - INTERVAL '20 minutes', ST_SetSRID(ST_MakePoint(77.5925, 12.9725), 4326)),
-(1, 1, NOW() - INTERVAL '15 minutes', ST_SetSRID(ST_MakePoint(77.5930, 12.9730), 4326)),
-(1, 1, NOW() - INTERVAL '10 minutes', ST_SetSRID(ST_MakePoint(77.5935, 12.9735), 4326)),
-(1, 1, NOW() - INTERVAL '5 minutes',  ST_SetSRID(ST_MakePoint(77.5940, 12.9740), 4326));
-
--- 6. Insert Delivery Milestones
-INSERT INTO DELIVERY_EVENT (delivery_id, driver_id, event_type, event_time, location) VALUES
-(1, 1, 'ASSIGNED', NOW() - INTERVAL '25 minutes', ST_SetSRID(ST_MakePoint(77.5925, 12.9725), 4326)),
-(1, 1, 'PICKUP',   NOW() - INTERVAL '20 minutes', ST_SetSRID(ST_MakePoint(77.5925, 12.9725), 4326)),
-(1, 1, 'DELIVERED', NOW() - INTERVAL '2 minutes',  ST_SetSRID(ST_MakePoint(77.5940, 12.9740), 4326));
+-- 6. Location Telemetry Trajectories
+INSERT INTO location_trace (delivery_id, driver_id, location, recorded_at) VALUES
+(1, 1, ST_SetSRID(ST_MakePoint(77.5925, 12.9725), 4326), '2026-09-12 12:05:00'),
+(1, 1, ST_SetSRID(ST_MakePoint(77.5930, 12.9730), 4326), '2026-09-12 12:10:00'),
+(1, 1, ST_SetSRID(ST_MakePoint(77.5935, 12.9735), 4326), '2026-09-12 12:15:00'),
+(1, 1, ST_SetSRID(ST_MakePoint(77.5940, 12.9740), 4326), '2026-09-12 12:20:00');
