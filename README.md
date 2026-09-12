@@ -1,6 +1,6 @@
-# Campus Last-Mile Food Delivery - Spatiotemporal Database Design
+# Campus Last-Mile Food Delivery - Spatiotemporal Database & Analytics Engine
 
-A high-performance PostgreSQL + PostGIS spatiotemporal database architecture designed for tracking food orders, delivery drivers, continuous GPS trajectories, and zone-based delivery events across a university campus.
+A high-performance PostgreSQL + PostGIS spatiotemporal database architecture and interactive analytics dashboard designed for real-time food order tracking, driver trajectory reconstruction, spatial index benchmarking, and automated geofence compliance monitoring across a university campus.
 
 ---
 
@@ -9,12 +9,24 @@ A high-performance PostgreSQL + PostGIS spatiotemporal database architecture des
 ### M1: Problem & Workload Analysis
 * **Core Goal:** Provide continuous spatiotemporal tracking and dispatching for campus food delivery.
 * **Moving Entities:** Delivery Drivers (emitting high-frequency GPS position pings).
-* **Static Entities:** Campus Zones (Polygons), Restaurants (Points), Customers (Points).
-* **Workload Characteristics:** Write-heavy continuous telemetry streaming (`LOCATION_TRACE`) paired with low-latency spatial proximity reads (`ST_DWithin`)[cite: 1].
+* **Static Entities:** Campus Zones (`POLYGON`), Restaurants (`POINT`), Hostels/Customers (`POINT`).
+* **Workload Characteristics:** Write-heavy continuous telemetry streaming (`location_trace`) paired with low-latency spatial proximity reads (`ST_DWithin`).
 
 ### M2: Data & Database Design
-* **Spatiotemporal Decoupling:** Decouples high-volume location traces from transactional delivery status updates (`DELIVERY_EVENT`) to prevent database locks[cite: 1].
-* **Spatial Indexing:** Uses PostGIS Spatial GiST Indexes (`GIST`) across coordinates and polygons for sub-millisecond query performance[cite: 1].
+* **Spatiotemporal Decoupling:** Decouples high-volume location traces from transactional delivery status updates (`delivery_event`) to prevent database lock contention.
+* **Spatial Indexing:** Employs PostGIS Spatial GiST Indexes (`GIST`) across coordinates and polygons for sub-millisecond query performance.
+
+### M3: Synthetic Telemetry Generator
+* **Data Pipeline:** Includes a Python data generation script (`generate_data.py`) that populates 60+ active orders, multiple campus zone polygons, and over 600 interpolated GPS trajectory pings with simulated geofence anomalies.
+
+### M4: Spatiotemporal Query Engine
+* **Trajectory Reconstruction:** Dynamically generates driver paths and calculates real-time distance metrics using PostGIS spatial functions (`ST_MakeLine`, `ST_Length`).
+
+### M5: Performance Analysis & Spatial Optimization
+* **Index Benchmarking:** Uses `EXPLAIN ANALYZE` inside the dashboard to evaluate PostGIS GiST index traversal performance versus sequential scans.
+
+### M6: Geofence Investigation & Compliance
+* **Real-time Boundary Checking:** Performs spatial containment checks (`ST_Contains`) between active driver telemetry points and target campus zones to trigger immediate visual geofence breach alerts on live Leaflet map overlays.
 
 ---
 

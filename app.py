@@ -100,6 +100,7 @@ try:
     traj_row = cursor.fetchone()
     trajectory_json = traj_row[0] if traj_row else None
 
+    # Base Folium Map centered on Campus
     m = folium.Map(location=[12.968, 77.592], zoom_start=14, tiles="OpenStreetMap")
 
     if zones_json and zones_json.get('features'):
@@ -125,7 +126,68 @@ try:
             }
         ).add_to(m)
 
+    # Render Geofence Breach Warning Markers on Map
+    breach_query = """
+        WITH ActiveDeliveryZones AS (
+            SELECT 
+                dr.order_id,
+                z.boundary
+            FROM delivery_request dr
+            JOIN customer c ON dr.customer_id = c.customer_id
+            JOIN campus_zone z ON ST_Contains(z.boundary, c.location)
+        )
+        SELECT 
+            t.delivery_id,
+            d.driver_name,
+            ST_Y(t.location) AS lat,
+            ST_X(t.location) AS lon
+        FROM location_trace t
+        JOIN driver d ON t.driver_id = d.driver_id
+        JOIN ActiveDeliveryZones adz ON t.delivery_id = adz.order_id
+        WHERE NOT ST_Contains(adz.boundary, t.location)
+    """
+    if selected_driver_id is not None:
+        breach_query += f" AND t.driver_id = {selected_driver_id}"
+
+    cursor.execute(breach_query)
+    breach_points = cursor.fetchall()
+
+    for del_id, drv_name, b_lat, b_lon in breach_points:
+        folium.CircleMarker(
+            location=[b_lat, b_lon],
+            radius=5,
+            color='red',
+            fill=True,
+            fill_color='red',
+            fill_opacity=0.9,
+            popup=f"ALERT: Geofence Breach | Driver: {drv_name} | Delivery #{del_id}"
+        ).add_to(m)
+
     st_folium(m, width=1100, height=480)
+
+    # Dashboard Analytical Charts
+    st.header("Campus Analytics Overview")
+    chart_col1, chart_col2 = st.columns(2)
+
+    with chart_col1:
+        st.subheader("Deliveries Completed by Driver")
+        df_driver_counts = pd.read_sql("""
+            SELECT d.driver_name AS "Driver", COUNT(dr.order_id) AS "Total Deliveries"
+            FROM driver d
+            JOIN delivery_request dr ON d.driver_id = dr.driver_id
+            GROUP BY d.driver_name;
+        """, conn)
+        st.bar_chart(df_driver_counts.set_index("Driver"))
+
+    with chart_col2:
+        st.subheader("Hourly Delivery Request Volume")
+        df_hourly = pd.read_sql("""
+            SELECT EXTRACT(HOUR FROM created_at)::int AS "Hour of Day", COUNT(*) AS "Orders"
+            FROM delivery_request
+            GROUP BY "Hour of Day"
+            ORDER BY "Hour of Day";
+        """, conn)
+        st.line_chart(df_hourly.set_index("Hour of Day"))
 
     # Query Execution Tabs
     st.header("Spatiotemporal SQL Query Engine")
