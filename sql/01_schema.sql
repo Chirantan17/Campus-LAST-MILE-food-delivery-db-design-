@@ -82,3 +82,6 @@ CREATE INDEX idx_restaurant_location ON RESTAURANT USING GIST(location);
 CREATE INDEX idx_location_trace_spatial ON LOCATION_TRACE USING GIST(location);
 CREATE INDEX idx_location_trace_time ON LOCATION_TRACE(recorded_at);
 CREATE INDEX idx_delivery_event_spatial ON DELIVERY_EVENT USING GIST(location);
+
+-- BRIN index for append-only high-frequency GPS timestamps
+CREATE INDEX idx_location_trace_brin_time ON LOCATION_TRACE USING BRIN(recorded_at);
