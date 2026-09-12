@@ -11,13 +11,16 @@ st.markdown("Real-time Spatiotemporal Querying, Trajectory Tracking & Geofencing
 
 @st.cache_resource
 def get_db_connection():
-    return psycopg2.connect(
-        host="127.0.0.1",
-        port=5432,
-        dbname="campus_delivery",
-        user="postgres",
-        password="postgrespassword"
-    )
+    if "postgres" in st.secrets:
+        return psycopg2.connect(
+            host=st.secrets["postgres"]["host"],
+            port=int(st.secrets["postgres"]["port"]),
+            dbname=st.secrets["postgres"]["dbname"],
+            user=st.secrets["postgres"]["user"],
+            password=st.secrets["postgres"]["password"],
+            sslmode=st.secrets["postgres"]["sslmode"]
+        )
+    return psycopg2.connect("postgresql://neondb_owner:npg_Ggq1zF4xDpal@ep-dawn-frost-aeddszp1.c-2.us-east-2.aws.neon.tech/neondb?sslmode=require")
 
 try:
     conn = get_db_connection()
