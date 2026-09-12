@@ -1,7 +1,7 @@
 # Campus Last-Mile Food Delivery - Spatiotemporal Database & Analytics Engine
 
 [![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://last-mile-campus-delivery-chirantan.streamlit.app)
-[![PostGIS Engine](https://img.shields.io/badge/PostGIS-Spatiotemporal%20Engine-blue?style=flat&logo=postgresql)](https://github.com/Chirantan17/Campus-LAST-MILE-food-delivery-db-design)
+[![PostGIS Engine](https://img.shields.io/badge/PostGIS-Spatiotemporal%20Engine-blue?style=flat&logo=postgresql)](https://github.com/Chirantan17/campus-spatiotemporal-delivery-engine)
 [![Database](https://img.shields.io/badge/Database-Neon%20PostgreSQL-00E599?style=flat&logo=postgresql&logoColor=white)](https://neon.tech)
 [![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-3776AB?style=flat&logo=python&logoColor=white)](https://www.python.org/)
 
