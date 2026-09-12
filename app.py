@@ -9,8 +9,7 @@ st.set_page_config(page_title="Campus Spatiotemporal Analytics Engine", layout="
 st.title("Campus Last-Mile Delivery Analytics Engine")
 st.markdown("Real-time Spatiotemporal Querying, Trajectory Tracking & Geofencing Platform")
 
-@st.cache_resource
-def get_db_connection():
+def create_conn():
     if "postgres" in st.secrets:
         return psycopg2.connect(
             host=st.secrets["postgres"]["host"],
@@ -21,6 +20,20 @@ def get_db_connection():
             sslmode=st.secrets["postgres"]["sslmode"]
         )
     return psycopg2.connect("postgresql://neondb_owner:npg_Ggq1zF4xDpal@ep-dawn-frost-aeddszp1.c-2.us-east-2.aws.neon.tech/neondb?sslmode=require")
+
+@st.cache_resource(ttl=600)
+def _get_cached_connection():
+    return create_conn()
+
+def get_db_connection():
+    conn = _get_cached_connection()
+    try:
+        with conn.cursor() as check_cur:
+            check_cur.execute("SELECT 1;")
+        return conn
+    except Exception:
+        st.cache_resource.clear()
+        return _get_cached_connection()
 
 try:
     conn = get_db_connection()
