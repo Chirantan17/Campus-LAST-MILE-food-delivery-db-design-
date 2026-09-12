@@ -1,5 +1,9 @@
 # Campus Last-Mile Food Delivery - Spatiotemporal Database & Analytics Engine
 
+[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://share.streamlit.io/)
+[![PostGIS Engine](https://img.shields.io/badge/PostGIS-Spatiotemporal%20Engine-blue?style=flat&logo=postgresql)](https://github.com/Chirantan17/Campus-LAST-MILE-food-delivery-db-design)
+[![Python](https://img.shields.io/badge/Python-3.10%2B-green?style=flat&logo=python)](https://www.python.org/)
+
 A high-performance PostgreSQL + PostGIS spatiotemporal database architecture and interactive analytics dashboard designed for real-time food order tracking, driver trajectory reconstruction, spatial index benchmarking, and automated geofence compliance monitoring across a university campus.
 
 ---
