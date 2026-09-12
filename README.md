@@ -1,17 +1,32 @@
 # Campus Last-Mile Food Delivery - Spatiotemporal Database & Analytics Engine
 
-[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://share.streamlit.io/)
+[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://last-mile-campus-delivery-chirantan.streamlit.app)
 [![PostGIS Engine](https://img.shields.io/badge/PostGIS-Spatiotemporal%20Engine-blue?style=flat&logo=postgresql)](https://github.com/Chirantan17/Campus-LAST-MILE-food-delivery-db-design)
-[![Python](https://img.shields.io/badge/Python-3.10%2B-green?style=flat&logo=python)](https://www.python.org/)
+[![Database](https://img.shields.io/badge/Database-Neon%20PostgreSQL-00E599?style=flat&logo=postgresql&logoColor=white)](https://neon.tech)
+[![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-3776AB?style=flat&logo=python&logoColor=white)](https://www.python.org/)
 
 A high-performance PostgreSQL + PostGIS spatiotemporal database architecture and interactive analytics dashboard designed for real-time food order tracking, driver trajectory reconstruction, spatial index benchmarking, and automated geofence compliance monitoring across a university campus.
+
+---
+
+### 🚀 [Launch Live Interactive Dashboard](https://last-mile-campus-delivery-chirantan.streamlit.app)
+
+---
+
+## Tech Stack & Architecture
+
+* **Database Engine:** PostgreSQL + PostGIS (Hosted on Neon Cloud)
+* **Spatial Functions:** `ST_Contains`, `ST_MakeLine`, `ST_Length`, `ST_DWithin`, `ST_AsGeoJSON`
+* **Indexing:** PostGIS Spatial GiST (`GIST`) indexing for sub-millisecond query performance
+* **Dashboard & Visualizations:** Streamlit, Folium / Leaflet JS, Pandas, Psycopg2
+* **Data Pipeline:** Synthetic spatiotemporal telemetry generator with linear interpolation & simulated anomalies
 
 ---
 
 ## Architecture & Module Summary
 
 ### M1: Problem & Workload Analysis
-* **Core Goal:** Provide continuous spatiotemporal tracking and dispatching for campus food delivery.
+* **Core Goal:** Continuous spatiotemporal tracking and dispatching for campus food delivery.
 * **Moving Entities:** Delivery Drivers (emitting high-frequency GPS position pings).
 * **Static Entities:** Campus Zones (`POLYGON`), Restaurants (`POINT`), Hostels/Customers (`POINT`).
 * **Workload Characteristics:** Write-heavy continuous telemetry streaming (`location_trace`) paired with low-latency spatial proximity reads (`ST_DWithin`).
@@ -21,7 +36,7 @@ A high-performance PostgreSQL + PostGIS spatiotemporal database architecture and
 * **Spatial Indexing:** Employs PostGIS Spatial GiST Indexes (`GIST`) across coordinates and polygons for sub-millisecond query performance.
 
 ### M3: Synthetic Telemetry Generator
-* **Data Pipeline:** Includes a Python data generation script (`generate_data.py`) that populates 60+ active orders, multiple campus zone polygons, and over 600 interpolated GPS trajectory pings with simulated geofence anomalies.
+* **Data Pipeline:** Python generation script (`generate_data.py`) populating 60+ active orders, campus zone polygons, and over 600 interpolated GPS trajectory pings with simulated geofence anomalies.
 
 ### M4: Spatiotemporal Query Engine
 * **Trajectory Reconstruction:** Dynamically generates driver paths and calculates real-time distance metrics using PostGIS spatial functions (`ST_MakeLine`, `ST_Length`).
