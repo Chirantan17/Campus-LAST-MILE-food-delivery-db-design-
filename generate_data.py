@@ -3,13 +3,7 @@ import random
 from datetime import datetime, timedelta
 
 def populate_database():
-    conn = psycopg2.connect(
-        host="127.0.0.1",
-        port=5432,
-        dbname="campus_delivery",
-        user="postgres",
-        password="postgrespassword"
-    )
+    conn = psycopg2.connect("postgresql://neondb_owner:npg_Ggq1zF4xDpal@ep-dawn-frost-aeddszp1.c-2.us-east-2.aws.neon.tech/neondb?sslmode=require")
     cursor = conn.cursor()
 
     print("Cleaning existing database tables...")
