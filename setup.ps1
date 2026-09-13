@@ -8,10 +8,10 @@ Write-Host "Applying Schema..." -ForegroundColor Green
 Get-Content sql/01_schema.sql | docker exec -i campus_spatial_db psql -U postgres -d campus_delivery
 
 Write-Host "Seeding Data..." -ForegroundColor Green
-Get-Content sql/03_seed.sql | docker exec -i campus_spatial_db psql -U postgres -d campus_delivery
+Get-Content sql/02_seed.sql | docker exec -i campus_spatial_db psql -U postgres -d campus_delivery
 
-Write-Host "Executing M4 Queries..." -ForegroundColor Green
-Get-Content sql/02_queries.sql | docker exec -i campus_spatial_db psql -U postgres -d campus_delivery
+Write-Host "Executing M4 Spatiotemporal Queries..." -ForegroundColor Green
+Get-Content sql/03_spatiotemporal_queries.sql | docker exec -i campus_spatial_db psql -U postgres -d campus_delivery
 
 Write-Host "Executing M5 Performance Analysis..." -ForegroundColor Green
 Get-Content sql/05_performance.sql | docker exec -i campus_spatial_db psql -U postgres -d campus_delivery
